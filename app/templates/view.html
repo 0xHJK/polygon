@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href='//fonts.googleapis.com/css?family=Raleway:400,300,600' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="/static/main.min.css">
+    <title>Hello ice</title>
+</head>
+<body>
+    <div class="container">
+        <section class="header">
+            <h2 class="title">地图标注工具 For ice</h2>
+        </section>
+        <section class="info">
+            <div class="row">
+                <div class="four columns">
+                    <select name="types" id="types" class="u-full-width">
+                        <option value="00" selected="selected">00-全部显示</option>
+                        {% for type in kvtypes %}
+                        <option value="{{ type[0] }}">{{ type[0] }}-{{ type[1] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="four columns">
+                    <button id="btn-showmap" class="button-primary u-full-width">地图展示</button>
+                </div>
+                <div class="four columns">
+                    <button id="btn-export" class="u-full-width">导出Excel</button>
+                </div>
+            </div>
+            <div class="row">
+                <div id="map" style="height: 500px"></div>
+            </div>
+        </section>
+        <input type="hidden" value="{{ rid }}" id="rid">
+        <input type="hidden" value="{{ center }}" id="center">
+    </div>
+    <script src="//cdn.bootcss.com/jquery/2.2.4/jquery.min.js"></script>
+    <script type="text/javascript" src="http://webapi.amap.com/maps?v=1.3&key=e444f2d824f09ff1708854c1e66d0e19&callback=init"></script>
+    <script>
+        function init(){
+            var map = new AMap.Map('map', {
+                center: $('#center').val().split(','),
+                zoom: 13
+            });
+            map.plugin(["AMap.ToolBar"], function() {
+                map.addControl(new AMap.ToolBar());
+            });
+            function showMarker(pois) {
+                map.clearMap()
+                markers = []
+                for(var i = 0; i < pois.length; i++) {
+                    marker = new AMap.Marker({
+                        position: pois[i],
+                        map: map
+                    })
+                    markers.push(marker)
+                }
+                map.setFitView()
+            }
+            function getPois(tid, rid) {
+                data = {
+                    'tid': tid,
+                    'rid': rid,
+                    'do': 'view'
+                }
+                $.get('/api', data, function(data){
+                    showMarker(data)
+                })
+            }
+            function getExcel(tid, rid) {
+                data = {
+                    'tid': tid,
+                    'rid': rid,
+                    'do': 'excel'
+                }
+                $.get('/api', data, function(data){
+                    console.log(data)
+                    window.location.href = '/excel/' + data
+                })
+            }
+            $('#btn-showmap').click(function () {
+                getPois($('#types').val(), $('#rid').val())
+            })
+            $('#btn-export').click(function () {
+                getExcel($('#types').val(), $('#rid').val())
+            })
+        }
+    </script>
+</body>
+</html>
